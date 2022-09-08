@@ -10,10 +10,6 @@ phases:
        - aws s3 cp s3://$ENVIRONMENT_BUCKET/skynet-web/variables variables
        - . ./variables
        - npm install && npm run build
-       - echo $VERSION
-       - ls
-       - ls dist
-       - ls build
        - cp ./dist/js/main.bundle.js ./dist/js/main-$VERSION.bundle.js
 artifacts:
   files:
