@@ -8,7 +8,7 @@ phases:
     commands:
        # to put env here if needed
        - aws s3 cp s3://$ENVIRONMENT_BUCKET/skynet-web/variables variables
-       - source ./variables
+       - . ./variables
        - npm install && npm run build
        - cp ./dist/main.bundle.js ./dist/main-$VERSION.bundle.js
 artifacts:
