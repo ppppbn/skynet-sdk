@@ -246,28 +246,36 @@
 
   /* Measure FCP & LCP for performance tracking */
   if (PerformanceObserver) {
-    /* FCP */
-    new PerformanceObserver(entryList => {
-      entryList.getEntries().forEach((entry) => {
-        if (entry.name === 'first-contentful-paint') {
-          Skynet.sendPerformanceDataInternal('FCP', entry);
-        }
 
-        if (entry.name === 'first-paint') {
-          Skynet.sendPerformanceDataInternal('FP', entry);
-        }
-      });
-    }).observe({ type: "paint", buffered: true });
+    try {
+      /* FCP */
+      new PerformanceObserver(entryList => {
+        entryList.getEntries().forEach((entry) => {
+          if (entry.name === 'first-contentful-paint') {
+            Skynet.sendPerformanceDataInternal('FCP', entry);
+          }
 
-    /* LCP */
-    new PerformanceObserver(entryList => {
-      entryList.getEntries().forEach((entry) => {
-        if (entry.startTime < hiddenTime) {
-          /* This entry occurred before the page was hidden */
-          Skynet.sendPerformanceDataInternal('LCP', entry);
-        }
+          if (entry.name === 'first-paint') {
+            Skynet.sendPerformanceDataInternal('FP', entry);
+          }
+        });
+      }).observe({ type: "paint", buffered: true });
+
+      /* LCP */
+      new PerformanceObserver(entryList => {
+        entryList.getEntries().forEach((entry) => {
+          if (entry.startTime < hiddenTime) {
+            /* This entry occurred before the page was hidden */
+            Skynet.sendPerformanceDataInternal('LCP', entry);
+          }
+        });
+      }).observe({ type: "largest-contentful-paint", buffered: true });
+    } catch (e) {
+      Skynet.sendRequest('perf-error', {
+        info: 'PerformanceObserver API is not supported by this browser',
+        details: e.message
       });
-    }).observe({ type: "largest-contentful-paint", buffered: true });
+    }
   }
 
   window.Skynet = Skynet;
