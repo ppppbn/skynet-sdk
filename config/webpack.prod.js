@@ -13,9 +13,6 @@ module.exports = merge(common, {
   },
   optimization: {
     minimize: true,
-    runtimeChunk: {
-      name: 'runtime',
-    },
   },
   performance: {
     hints: false,
