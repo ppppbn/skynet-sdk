@@ -8,8 +8,10 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Initialize SDK with basic error tracking and persisting logs to backend service
-- Start writing documentation
+- Initialize SDK
+- Initialize documentation
+- Added basic error tracking and persisting logs to backend service
+- Added performance measurement (FP, FCP & LCP)
 
 ### Changed
 
