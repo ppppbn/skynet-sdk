@@ -10,54 +10,55 @@ Skynet is a simple Javascript script that traces errors, collects data about web
 
 It is a good practice to use Asynchronous syntax to load the script. This helps to optimize the user experience on the website that are using the SDK. This approach reduces chances of the SDK library interfering with the hosting website.
 
-<script async type="text/javascript" src="skynet-v-${version}.js"></script>
-directly after your browsers <code>&lt;head></code> tag.
+    <script async type="text/javascript" src="main-${version}.bundle.js"></script>
+
+directly after your browser's **head** tag.
 
 ### Optionally, after the script tag, you can add additional parameters to Skynet
 
 NOTE: When using an Asynchronous approach, It is ill-advised to execute SDK initialization functions before all libraries are loaded, parsed and executed in the hosting page.
 Therefore, only initilize Skynet configuration variables **after** the script is loaded.
 
-/*Optional to allow the error message to also be presented to the user*/
+#### *Optional to allow the error message to also be presented to the user*
 
     Skynet.debugMode = true;
 
-/*Optionally add additional debug information to the skynet.info*/
+#### *Optionally add metadata information*
+
+    Skynet.metadata = { customerId: 1, phoneNumber: 'aaa-bbb-cccc' }
+
+#### *Optionally add additional debug information*
 
     Skynet.additionalInfo = "May be you can put the project id here?"
 
-/*Optionally specify URL to which the logging should be done*/
+#### *Optionally specify URL to which the logging should be done*
 
     Skynet.backendUrl = YOUR_URL_HERE;
 
-/*Optionally specify certain querystring parameters never to pass to the logging service
-
-  either on the file location or the server name. Simply list them in the array
-
-  and script will check for them (case insensitive)*/
+#### *Optionally specify certain querystring parameters never to pass to the logging service either on the file location or the server name. Simply list them in the array and script will check for them (case insensitive)*
 
     Skynet.qsIgnore = ["username","password"];
 
-/*If you want to ignore certain domains from reporting, add them to*/
+#### *If you want to ignore certain domains from reporting, add them to*
 
     Skynet.domainIgnore = ["https://do.not.track.com"]
 
-/*Limit number of errors that will be sent for a page (default is 10, false allows infinite)*/
+#### *Limit number of errors that will be sent for a page (default is 10, false allows infinite)*
 
     Skynet.reportThreshold = 10;
 
 ### The options are
 
-* **skynet.debugMode**: Set to true if you'd like the web browser not
+* **Skynet.debugMode**: Set to true if you'd like the web browser not
   to swallow in-browser errors.
-* **skynet.metadata**: Represent metadata, such as **identity** and **customerId**.
-* **skynet.additionalInfo**: A custom string bundled with the HTTP GET request.
+* **Skynet.metadata**: Represent metadata, such as **identity** and **customerId**.
+* **Skynet.additionalInfo**: A custom string bundled with the HTTP GET request.
   Can be used to add additional information, such as a customer number,
   extra state or similar.
-* **skynet.url**: The absolute URL to which POST requests will be made.
-* **skynet.qsIgnore**: populates an array of querystring parameters to be stripped before reporting
-* **skynet.domainIgnore**: populates an array of prefixes that will be ignored on file location before reporting, can be used to avoid reporting on ad server or 3rd party sites.
-* **skynet.reportThreshold**: Max number of errors that will be reported for a page
+* **Skynet.url**: The absolute URL to which POST requests will be made.
+* **Skynet.qsIgnore**: populates an array of querystring parameters to be stripped before reporting
+* **Skynet.domainIgnore**: populates an array of prefixes that will be ignored on file location before reporting, can be used to avoid reporting on ad server or 3rd party sites.
+* **Skynet.reportThreshold**: Max number of errors that will be reported for a page
 
 ## Design philosophy
 
@@ -67,7 +68,7 @@ Therefore based on the widely adopted good practice, is to write SDK with vanill
 
 It is also recommended not to use libraries such as jQuery in SDK development. The exception is of course when it is really important. To add a new library to the project, please ask for permissions from your supervisor or leader first.
 
-This project used Webpack 5 to bundle resources. This reduce the size of the script to 4kb and make it a lightweight SDK to suit our purposes.
+This project used Webpack 5 to bundle resources. This reduce the size of the script to approximately 4kb and make it a lightweight SDK to suit our purposes.
 
 Backward compatibility is paramount. Every new SDK version released should be enabled with support of previous older versions. Likewise, current version should be designed to support future SDK versions. This is referred to as Forward compatibility.
 
@@ -91,7 +92,16 @@ LCP is not a single measurement, but a series of measurements. An additional **L
 
 What constitutes “largest” varies by element type. Image element size is determined by the size of the image as shown on the page. Text-containing element size is the smallest box than encompasses the text itself.
 
-We can also measure LCP by using **PerformanceObserver** API. However, Last Contentful Paint should not be measured when the page is loaded in a background tab. The measurement only indicates when the user first brought the tab to the foreground in that case. This is why we have an additional check to prevent measurement of background tabs
+We also measure LCP by using **PerformanceObserver** API. One thing to note is LCP should not be measured when the page is loaded in a background tab. The measurement only indicates when the user first brought the tab to the foreground in that case. This is why we have an additional check in the code to prevent measurement of background tabs.
+
+    new PerformanceObserver(entryList => {
+      entryList.getEntries().forEach((entry) => {
+        if (entry.startTime < hiddenTime) {
+          /* This entry occurred before the page was hidden */
+          Skynet.sendPerformanceDataInternal('LCP', entry);
+        }
+      });
+    }).observe({ type: "largest-contentful-paint", buffered: true });
 
 ## Changelog documentation
 
