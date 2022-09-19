@@ -99,6 +99,8 @@
   Skynet.domainIgnore = [];
   /* Whitelist script domains which can trigger errors */
   Skynet.domainWhitelist = [];
+  /* Skynet project ID */
+  Skynet.projectId = '';
   /* Max number of reports sent from a page (defaults to 10, false allows infinite) */
   Skynet.reportThreshold = 10;
   /* Set to false to log errors and also pass them through to the default handler
@@ -152,19 +154,35 @@
       if (Skynet.reportThreshold > 0) {
           Skynet.reportThreshold -= 1;
       }
-      Skynet.sendRequest(index, requestData);
+      Skynet.sendRequest('error', {
+        index,
+        ...requestData
+      });
     }
   }
 
   /* Send performance tracking internal */
-  Skynet.sendPerformanceDataInternal = function(type, data) {
-    Skynet.sendRequest(type, data);
+  Skynet.sendPerformanceDataInternal = function(performanceType, data) {
+    Skynet.sendRequest('performance', {
+      type: performanceType,
+      ...data
+    });
   }
 
   /* Calling tracking backend service */
-  Skynet.sendRequest = function(index, data) {
+  Skynet.sendRequest = function(type, data) {
     try {
-      /* TODO: Integrate with backend service */
+      const url = (type === 'performance')
+        ? `${Skynet.backendUrl}/performanceLog`
+        : `${Skynet.backendUrl}/errorLog`;
+
+      window.fetch(url, {
+        method: 'POST',
+        body: {
+          projectId: Skynet.projectId,
+          ...data
+        },
+      });
     } catch (e) {
       Skynet.errorHandler('sendRequest', e);
     }
@@ -271,7 +289,7 @@
         });
       }).observe({ type: "largest-contentful-paint", buffered: true });
     } catch (e) {
-      Skynet.sendRequest('perf-error', {
+      Skynet.sendRequest('error', {
         info: 'PerformanceObserver API is not supported by this browser',
         details: e.message
       });
