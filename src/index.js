@@ -163,10 +163,16 @@
 
   /* Send performance tracking internal */
   Skynet.sendPerformanceDataInternal = function(performanceType, data) {
-    Skynet.sendRequest('performance', {
-      type: performanceType,
-      ...data
-    });
+    const clonedPerformanceData = JSON.parse(JSON.stringify(data || {}));
+
+    /* Timeout to make sure the configuration has been initialized */
+    setTimeout(() => {
+      Skynet.sendRequest('performance', {
+        type: performanceType,
+        metadata: Skynet.metadata,
+        ...clonedPerformanceData
+      });
+    }, 5000);
   }
 
   /* Calling tracking backend service */
@@ -178,10 +184,14 @@
 
       window.fetch(url, {
         method: 'POST',
-        body: {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
           projectId: Skynet.projectId,
           ...data
-        },
+        }),
       });
     } catch (e) {
       Skynet.errorHandler('sendRequest', e);
