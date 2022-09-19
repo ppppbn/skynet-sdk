@@ -170,7 +170,8 @@
       Skynet.sendRequest('performance', {
         type: performanceType,
         metadata: Skynet.metadata,
-        ...clonedPerformanceData
+        ...clonedPerformanceData,
+        element: data?.element?.outerHTML
       });
     }, 5000);
   }
