@@ -92,7 +92,7 @@
   /* Default the additional info message to blank */
   Skynet.additionalInfo = '';
   /* Default the URL to the backend service */
-  Skynet.backendUrl = '';
+  Skynet.backendUrl = 'https://api.prd.telio.me/skynet-server/v1';
   /* Default the qsIgnore to nothing (ie pass everything on the querystring) */
   Skynet.qsIgnore = [];
   /* Default ignored domains to nothing */
