@@ -92,7 +92,8 @@
   /* Default the additional info message to blank */
   Skynet.additionalInfo = '';
   /* Default the URL to the backend service */
-  Skynet.backendUrl = 'https://api.prd.telio.me/skynet-server/v1';
+  Skynet.defaultBackendUrl = 'https://api.prd.telio.me/skynet-server/v1';
+  Skynet.backendUrl = '';
   /* Default the qsIgnore to nothing (ie pass everything on the querystring) */
   Skynet.qsIgnore = [];
   /* Default ignored domains to nothing */
@@ -180,9 +181,10 @@
   /* Calling tracking backend service */
   Skynet.sendRequest = function(type, data) {
     try {
+      const backendUrl = Skynet.backendUrl || Skynet.defaultBackendUrl;
       const url = (type === 'performance')
-        ? `${Skynet.backendUrl}/performanceLog`
-        : `${Skynet.backendUrl}/errorLog`;
+        ? `${backendUrl}/performanceLog`
+        : `${backendUrl}/errorLog`;
 
       window.fetch(url, {
         method: 'POST',
@@ -295,7 +297,7 @@
             Skynet.sendPerformanceDataInternal('LCP', entry);
           }
         });
-      }).observe({ entryTypes: ["paint", "largest-contentful-paint"], buffered: true });
+      }).observe({ entryTypes: Skynet.projectId === 'Telio App' ? ["paint"] : ["paint", "largest-contentful-paint"], buffered: true });
     } catch (e) {
       Skynet.sendRequest('error', {
         projectId: Skynet.projectId,
