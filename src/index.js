@@ -278,27 +278,28 @@
   if (PerformanceObserver) {
 
     try {
-      /* FCP */
       new PerformanceObserver(entryList => {
         entryList.getEntries().forEach((entry) => {
+          /* FCP */
           if (entry.name === 'first-contentful-paint') {
             Skynet.sendPerformanceDataInternal('FCP', entry);
           }
 
+          /* FP */
           if (entry.name === 'first-paint') {
             Skynet.sendPerformanceDataInternal('FP', entry);
           }
-        });
-      }).observe({ type: "paint", buffered: true });
 
-      /* LCP */
-      new PerformanceObserver(entryList => {
-        entryList.getEntries().forEach((entry) => {
-          Skynet.sendPerformanceDataInternal('LCP', entry);
+          /* LCP */
+          if (entry.name === 'largest-contentful-paint' || entry.entryType === 'largest-contentful-paint') {
+            Skynet.sendPerformanceDataInternal('LCP', entry);
+          }
         });
-      }).observe({ type: "largest-contentful-paint", buffered: true });
+      }).observe({ entryTypes: ["paint", "largest-contentful-paint"], buffered: true });
     } catch (e) {
       Skynet.sendRequest('error', {
+        projectId: Skynet.projectId,
+        url: window.location.href || document.URL,
         message: 'PerformanceObserver API is not supported by this browser',
         additionalInfo: e.message,
         metadata: Skynet.metadata,
