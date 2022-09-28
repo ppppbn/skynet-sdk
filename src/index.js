@@ -102,7 +102,7 @@
   /* Skynet project ID */
   Skynet.projectId = '';
   /* Max number of reports sent from a page (defaults to 10, false allows infinite) */
-  Skynet.reportThreshold = 10;
+  Skynet.reportThreshold = 30;
   /* Set to false to log errors and also pass them through to the default handler
   (and see them in the browser's error console) */
   Skynet.trapErrors = false;
@@ -144,7 +144,7 @@
       columnNumber,
       /* Information should be given enough within 256 chars */
       info: info ? info.substr(0, 256) : '',
-      error: msg,
+      message: msg,
       metadata: Skynet.metadata,
     };
 
@@ -168,9 +168,10 @@
     /* Timeout to make sure the configuration has been initialized */
     setTimeout(() => {
       Skynet.sendRequest('performance', {
-        type: performanceType,
         metadata: Skynet.metadata,
         ...clonedPerformanceData,
+        entryType: performanceType,
+        startTime: clonedPerformanceData?.startTime?.toString(),
         element: data?.element?.outerHTML
       });
     }, 5000);
@@ -293,16 +294,14 @@
       /* LCP */
       new PerformanceObserver(entryList => {
         entryList.getEntries().forEach((entry) => {
-          if (entry.startTime < hiddenTime) {
-            /* This entry occurred before the page was hidden */
-            Skynet.sendPerformanceDataInternal('LCP', entry);
-          }
+          Skynet.sendPerformanceDataInternal('LCP', entry);
         });
       }).observe({ type: "largest-contentful-paint", buffered: true });
     } catch (e) {
       Skynet.sendRequest('error', {
-        info: 'PerformanceObserver API is not supported by this browser',
-        details: e.message
+        message: 'PerformanceObserver API is not supported by this browser',
+        additionalInfo: e.message,
+        metadata: Skynet.metadata,
       });
     }
   }
