@@ -7,6 +7,7 @@ phases:
   build:
     commands:
        # to put env here if needed
+       - aws s3 cp s3://$ENVIRONMENT_BUCKET/skynet-web/env .env
        - aws s3 cp s3://$ENVIRONMENT_BUCKET/skynet-web/variables variables
        - . ./variables
        - npm install && npm run build
