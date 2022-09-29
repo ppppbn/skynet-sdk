@@ -92,7 +92,7 @@
   /* Default the additional info message to blank */
   Skynet.additionalInfo = '';
   /* Default the URL to the backend service */
-  Skynet.defaultBackendUrl = 'https://api.prd.telio.me/skynet-server/v1';
+  Skynet.defaultBackendUrl = process.env.DEFAULT_BACKEND_URL;
   Skynet.backendUrl = '';
   /* Default the qsIgnore to nothing (ie pass everything on the querystring) */
   Skynet.qsIgnore = [];
@@ -185,6 +185,14 @@
       const url = (type === 'performance')
         ? `${backendUrl}/performanceLog`
         : `${backendUrl}/errorLog`;
+      const body = (type === 'performance') ? {
+        projectId: Skynet.projectId,
+        ...data
+       } : {
+        projectId: Skynet.projectId,
+        ...data,
+        message: data.message || data.error
+      };
 
       window.fetch(url, {
         method: 'POST',
@@ -192,10 +200,7 @@
           'Accept': 'application/json',
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          projectId: Skynet.projectId,
-          ...data
-        }),
+        body: JSON.stringify(body),
       });
     } catch (e) {
       Skynet.errorHandler('sendRequest', e);
@@ -297,7 +302,7 @@
             Skynet.sendPerformanceDataInternal('LCP', entry);
           }
         });
-      }).observe({ entryTypes: Skynet.projectId === 'Telio App' ? ["paint"] : ["paint", "largest-contentful-paint"], buffered: true });
+      }).observe({ entryTypes: Skynet.projectId === 'Telio App' ? ["paint"] : ["paint", "largest-contentful-paint"]});
     } catch (e) {
       Skynet.sendRequest('error', {
         projectId: Skynet.projectId,
