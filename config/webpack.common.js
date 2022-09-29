@@ -1,4 +1,8 @@
-const { CleanWebpackPlugin } = require('clean-webpack-plugin')
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const webpack = require('webpack');
+const dotenv = require('dotenv')
+
+dotenv.config();
 
 const paths = require('./paths')
 
@@ -17,6 +21,9 @@ module.exports = {
   plugins: [
     // Removes/cleans build folders and unused assets when rebuilding
     new CleanWebpackPlugin(),
+    new webpack.DefinePlugin({
+      "process.env": JSON.stringify(process.env)
+    }),
   ],
 
   // Determine how modules within the project are treated
