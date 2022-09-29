@@ -29,5 +29,8 @@
   "repository": {
     "type": "git",
     "url": "git@bitbucket.org:teliovn/skynet.git"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.2"
   }
 }
