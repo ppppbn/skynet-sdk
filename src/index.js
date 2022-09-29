@@ -96,6 +96,8 @@
   Skynet.backendUrl = '';
   /* Default the qsIgnore to nothing (ie pass everything on the querystring) */
   Skynet.qsIgnore = [];
+  /* Default string to ignore */
+  Skynet.ignoreString = 'zaloJSV2';
   /* Default ignored domains to nothing */
   Skynet.domainIgnore = [];
   /* Whitelist script domains which can trigger errors */
@@ -193,6 +195,10 @@
         ...data,
         message: data.message || data.error
       };
+
+      if (body.message && body.message.includes(Skynet.ignoreString)) {
+        return;
+      }
 
       window.fetch(url, {
         method: 'POST',
