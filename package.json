@@ -31,6 +31,7 @@
     "url": "git@bitbucket.org:teliovn/skynet.git"
   },
   "dependencies": {
-    "dotenv": "^16.0.2"
+    "dotenv": "^16.0.2",
+    "web-vitals": "^3.0.4"
   }
 }
