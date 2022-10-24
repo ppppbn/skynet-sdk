@@ -1,3 +1,5 @@
+import { onCLS, onFID, onLCP, onFCP, onTTFB } from 'web-vitals';
+
 (function(window) {
 
 	if (window.Skynet) return;
@@ -159,7 +161,8 @@
       }
       Skynet.sendRequest('error', {
         index,
-        ...requestData
+        additionalType: requestData.additionalType || 'script-error',
+        ...requestData,
       });
     }
   }
@@ -288,37 +291,22 @@
   }, { once: true });
 
   /* Measure FCP & LCP for performance tracking */
-  if (PerformanceObserver) {
-
-    try {
-      new PerformanceObserver(entryList => {
-        entryList.getEntries().forEach((entry) => {
-          /* FCP */
-          if (entry.name === 'first-contentful-paint') {
-            Skynet.sendPerformanceDataInternal('FCP', entry);
-          }
-
-          /* FP */
-          if (entry.name === 'first-paint') {
-            Skynet.sendPerformanceDataInternal('FP', entry);
-          }
-
-          /* LCP */
-          if (entry.name === 'largest-contentful-paint' || entry.entryType === 'largest-contentful-paint') {
-            Skynet.sendPerformanceDataInternal('LCP', entry);
-          }
-        });
-      }).observe({ entryTypes: Skynet.projectId === 'Telio App' ? ["paint"] : ["paint", "largest-contentful-paint"]});
-    } catch (e) {
-      Skynet.sendRequest('error', {
-        projectId: Skynet.projectId,
-        url: window.location.href || document.URL,
-        message: 'PerformanceObserver API is not supported by this browser',
-        additionalInfo: e.message,
-        metadata: Skynet.metadata,
-      });
-    }
+  function logAnalytics(metric) {
+    Skynet.sendPerformanceDataInternal(metric.name, {
+      delta: metric.delta,
+      value: metric.value,
+      rating: metric.rating,
+      navigationType: metric.navigationType,
+      pageUrl: window.location.href,
+      ...(metric?.entries?.[0] || {}),
+    });
   }
+  
+  onCLS(logAnalytics);
+  onFID(logAnalytics);
+  onLCP(logAnalytics);
+  onFCP(logAnalytics);
+  onTTFB(logAnalytics);
 
   window.Skynet = Skynet;
 
