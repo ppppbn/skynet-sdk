@@ -104,6 +104,8 @@ import { onCLS, onFID, onLCP, onFCP, onTTFB } from 'web-vitals';
   Skynet.domainIgnore = [];
   /* Whitelist script domains which can trigger errors */
   Skynet.domainWhitelist = [];
+  /* Whitelist error messages */
+  Skynet.messageWhitelist = ['Uncaught TypeError: C is not a function', `TypeError: C is not a function. (In 'C(!0)', 'C' is undefined)`];
   /* Skynet project ID */
   Skynet.projectId = '';
   /* Max number of reports sent from a page (defaults to 10, false allows infinite) */
@@ -243,6 +245,11 @@ import { onCLS, onFID, onLCP, onFCP, onTTFB } from 'web-vitals';
       return;
     }
 
+    if (Skynet.messageWhitelist.length > 0 && Skynet.messageWhitelist.includes(msg)) {
+      console.log('Skynet - error ignored because the message is in whitelist.');
+      return;
+    }
+
     let errorMessage =	`Error found in page: ${fileLocation}
       \n at line number: ${lineNumber}
       \n Error Message: ${msg}`;
@@ -283,12 +290,6 @@ import { onCLS, onFID, onLCP, onFCP, onTTFB } from 'web-vitals';
     }
     return true;
   }
-
-  let hiddenTime = document.visibilityState === 'hidden' ? 0 : Infinity;
-
-  document.addEventListener('visibilitychange', (event) => {
-      hiddenTime = Math.min(hiddenTime, event.timeStamp);
-  }, { once: true });
 
   /* Measure FCP & LCP for performance tracking */
   function logAnalytics(metric) {
