@@ -118,7 +118,7 @@ import { onCLS, onFID, onLCP, onFCP, onTTFB } from 'web-vitals';
   /* Skip CrossOrigin errors. These supply no helpful debugging info, and because
   of JavaScript injection from a (possibly ill-behaved) browser plugin, these can't
   be controlled from the app side. */
-  Skynet.ignoreCrossOriginErrors = false;
+  Skynet.ignoreCrossOriginErrors = true;
   /* Add the hook to the onError event
       - First store any existing error handler for the page */
   Skynet.fnPreviousOnErrorHandler = window.onerror;
