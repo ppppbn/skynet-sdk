@@ -194,9 +194,11 @@ import { onCLS, onFID, onLCP, onFCP, onTTFB } from 'web-vitals';
         : `${backendUrl}/errorLog`;
       const body = (type === 'performance') ? {
         projectId: Skynet.projectId,
+        userAgent: navigator.userAgent,
         ...data
        } : {
         projectId: Skynet.projectId,
+        userAgent: navigator.userAgent,
         ...data,
         message: data.message || data.error
       };
