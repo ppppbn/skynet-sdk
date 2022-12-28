@@ -180,7 +180,6 @@ import { onCLS, onFID, onLCP, onFCP, onTTFB } from 'web-vitals';
         ...clonedPerformanceData,
         entryType: performanceType,
         startTime: clonedPerformanceData?.startTime?.toString(),
-        element: data?.element?.outerHTML
       });
     }, 5000);
   }
@@ -293,6 +292,20 @@ import { onCLS, onFID, onLCP, onFCP, onTTFB } from 'web-vitals';
     return true;
   }
 
+  function stringify(obj) {
+    let seen = [];
+  
+    return JSON.stringify(obj, function (key, val) {
+      if (val && typeof val == 'object') {
+        if (seen.indexOf(val) >= 0) {
+          return;
+        }
+        seen.push(val);
+      }
+      return val;
+    });
+  }
+
   /* Measure FCP & LCP for performance tracking */
   function logAnalytics(metric) {
     Skynet.sendPerformanceDataInternal(metric.name, {
@@ -301,7 +314,9 @@ import { onCLS, onFID, onLCP, onFCP, onTTFB } from 'web-vitals';
       rating: metric.rating,
       navigationType: metric.navigationType,
       pageUrl: window.location.href,
-      ...(metric?.entries?.[0] || {}),
+      ...(JSON.parse(stringify(metric?.entries?.[0])) || {}),
+      element: metric?.entries?.[0]?.url || 
+        (metric?.entries?.[0]?.element ? stringify(metric?.entries?.[0]?.element)?.slice(0, 300) : null )
     });
   }
   
