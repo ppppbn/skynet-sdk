@@ -241,7 +241,7 @@ import { onCLS, onFID, onLCP, onFCP, onTTFB } from 'web-vitals';
       return;
     }
 
-    if (Skynet.ignoreCrossOriginErrors && msg === 'Script Error' && Number(lineNumber) === 0) {
+    if (Skynet.ignoreCrossOriginErrors && (msg === 'Script Error' || msg === 'Script error.') && Number(lineNumber) === 0) {
       console.log('Skynet - cross origin script error ignored because no additional error info supplied.');
       return;
     }
