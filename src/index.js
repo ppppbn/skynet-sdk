@@ -119,6 +119,8 @@ import { onCLS, onFID, onLCP, onFCP, onTTFB } from 'web-vitals';
   of JavaScript injection from a (possibly ill-behaved) browser plugin, these can't
   be controlled from the app side. */
   Skynet.ignoreCrossOriginErrors = true;
+  /* Snapshot request ID. This variable receive the request ID when save profiling resource logs */
+  Skynet.snapshotRequestId = '';
   /* Add the hook to the onError event
       - First store any existing error handler for the page */
   Skynet.fnPreviousOnErrorHandler = window.onerror;
@@ -292,6 +294,42 @@ import { onCLS, onFID, onLCP, onFCP, onTTFB } from 'web-vitals';
     return true;
   }
 
+  /* Send resource timing logs and navigation timing logs */ 
+  Skynet.sendProfilingResourceLogs = function() {
+    try {
+      const backendUrl = Skynet.backendUrl || Skynet.defaultBackendUrl;
+      const url = `${backendUrl}/profiling-resource-logs`;
+
+      const performanceResourceTimingLogs = window?.performance?.getEntriesByType("resource") || [];
+      const performanceNavigationTimingLogs = window?.performance?.getEntriesByType("navigation") || [];
+
+      if (!performanceResourceTimingLogs?.length && !performanceNavigationTimingLogs?.length) {
+        return
+      }
+
+      const body = {
+        performanceResourceTimingLogs,
+        performanceNavigationTimingLogs,
+        projectId: Skynet.projectId,
+        userAgent: navigator.userAgent,
+        metadata: Skynet.metadata,
+       };
+
+      window.fetch(url, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body),
+      })
+      .then((response) => response.json())
+      .then((response) => Skynet.snapshotRequestId = response.snapshotRequestId);
+    } catch (e) {
+      Skynet.errorHandler('sendRequest', e);
+    }
+  }
+
   function stringify(obj) {
     let seen = [];
   
@@ -319,12 +357,37 @@ import { onCLS, onFID, onLCP, onFCP, onTTFB } from 'web-vitals';
         (metric?.entries?.[0]?.element ? stringify(metric?.entries?.[0]?.element)?.slice(0, 300) : null )
     });
   }
+
+  function getSampleRateConfig(cb) {
+    const backendUrl = Skynet.backendUrl || Skynet.defaultBackendUrl;
+    const url = `${backendUrl}/configs/sample-rate`;
+
+    window.fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+    })
+    .then((response) => response.json())
+    .then((response) => cb(response));
+  }
   
   onCLS(logAnalytics);
   onFID(logAnalytics);
   onLCP(logAnalytics);
   onFCP(logAnalytics);
   onTTFB(logAnalytics);
+
+  window.onload = function() {
+    window.setTimeout(() => {
+      getSampleRateConfig((response) => {
+        if (response.value && !isNaN(response.value) && Math.random() < Number(response.value)) {
+          Skynet.sendProfilingResourceLogs();
+        }
+      })
+    }, 4000);
+  };
 
   window.Skynet = Skynet;
 
