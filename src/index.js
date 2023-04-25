@@ -315,7 +315,7 @@ import { onCLS, onFID, onLCP, onFCP, onTTFB } from 'web-vitals';
         metadata: Skynet.metadata,
        };
 
-      window.fetch(url, {
+      return window.fetch(url, {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
@@ -324,7 +324,10 @@ import { onCLS, onFID, onLCP, onFCP, onTTFB } from 'web-vitals';
         body: JSON.stringify(body),
       })
       .then((response) => response.json())
-      .then((response) => Skynet.snapshotRequestId = response.snapshotRequestId);
+      .then((response) => {
+        Skynet.snapshotRequestId = response.snapshotRequestId;
+        return response.snapshotRequestId;
+      });
     } catch (e) {
       Skynet.errorHandler('sendRequest', e);
     }
@@ -372,6 +375,31 @@ import { onCLS, onFID, onLCP, onFCP, onTTFB } from 'web-vitals';
     .then((response) => response.json())
     .then((response) => cb(response));
   }
+
+  function observePerformMarkAndMeasureLogs(snapshotRequestId) {
+    const observer = new PerformanceObserver((list) => {
+      const whitelistEntries = list.getEntries().filter((entry) => entry.name.includes('Telio'));
+      
+      if (whitelistEntries?.length) {
+        const backendUrl = Skynet.backendUrl || Skynet.defaultBackendUrl;
+        const url = `${backendUrl}/mark-and-measure-logs`;
+        const body = {
+          performanceMarkAndMeasureLogs: whitelistEntries,
+          snapshotRequestId: snapshotRequestId || Skynet.snapshotRequestId,
+        };
+    
+        window.fetch(url, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(body),
+        });
+      }
+    });
+    observer.observe({ entryTypes: ["measure", "mark"] });
+  }
   
   onCLS(logAnalytics);
   onFID(logAnalytics);
@@ -381,11 +409,12 @@ import { onCLS, onFID, onLCP, onFCP, onTTFB } from 'web-vitals';
 
   window.onload = function() {
     window.setTimeout(() => {
-      getSampleRateConfig((response) => {
+      getSampleRateConfig(async (response) => {
         if (response.value && !isNaN(response.value) && Math.random() < Number(response.value)) {
-          Skynet.sendProfilingResourceLogs();
+          const snapshotRequestId = await Skynet.sendProfilingResourceLogs();
+          observePerformMarkAndMeasureLogs(snapshotRequestId);
         }
-      })
+      });
     }, 4000);
   };
 
