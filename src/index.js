@@ -566,7 +566,14 @@ import * as rrweb from 'rrweb';
 
       const snapshotRequestId = await Skynet.sendProfilingResourceLogs();
 
-      listenToEvents(snapshotRequestId);
+      if (
+        (sampleRate &&
+          !isNaN(sampleRate) &&
+          Math.random() < Number(sampleRate)) ||
+        isExistConfigCustomerProfilingResource
+      ) {
+        listenToEvents(snapshotRequestId);
+      }
 
       window.setTimeout(async () => {
         if (
