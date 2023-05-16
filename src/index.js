@@ -443,7 +443,7 @@ import * as rrweb from 'rrweb';
     });
   }
 
-  function getSampleRateConfig(cb) {
+  function getSampleRateConfig() {
     const backendUrl = Skynet.backendUrl || Skynet.defaultBackendUrl;
     const url = `${backendUrl}/configs/sample-rate`;
 
@@ -456,7 +456,7 @@ import * as rrweb from 'rrweb';
         },
       })
       .then(response => response.json())
-      .then(response => cb(response));
+      .then(response => response);
   }
 
   function checkConfigCustomerProfilingResourceExist(identifier) {
