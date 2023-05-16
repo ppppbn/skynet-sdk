@@ -376,6 +376,21 @@ import { onCLS, onFID, onLCP, onFCP, onTTFB } from 'web-vitals';
     .then((response) => cb(response));
   }
 
+  function checkConfigCustomerProfilingResourceExist(identifier) {
+    const backendUrl = Skynet.backendUrl || Skynet.defaultBackendUrl;
+    const url = `${backendUrl}/customer-profiling-resource/check-config/${identifier}`;
+
+    window.fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+    })
+    .then((response) => response.json())
+    .then((response) => response);
+  }
+
   function observePerformMarkAndMeasureLogs(snapshotRequestId) {
     const observer = new PerformanceObserver((list) => {
       const whitelistEntries = list.getEntries().filter((entry) => entry.name.includes('Telio'));
@@ -408,13 +423,25 @@ import { onCLS, onFID, onLCP, onFCP, onTTFB } from 'web-vitals';
   onTTFB(logAnalytics);
 
   window.onload = function() {
-    window.setTimeout(() => {
-      getSampleRateConfig(async (response) => {
-        if (response.value && !isNaN(response.value) && Math.random() < Number(response.value)) {
-          const snapshotRequestId = await Skynet.sendProfilingResourceLogs();
-          observePerformMarkAndMeasureLogs(snapshotRequestId);
-        }
-      });
+    window.setTimeout(async () => {
+     try {
+       const configs = await Promise.all([
+        getSampleRateConfig(),
+        checkConfigCustomerProfilingResourceExist(Skynet.metadata?.customerId || Skynet.metadata?.identity)
+      ]);
+      const sampleRate = configs[0]?.value;
+      const isExistConfigCustomerProfilingResource = configs[1]?.existed;
+
+      if (
+        (sampleRate && !isNaN(sampleRate) && Math.random() < Number(sampleRate)) ||
+        isExistConfigCustomerProfilingResource
+      ) {
+        const snapshotRequestId = await Skynet.sendProfilingResourceLogs();
+        observePerformMarkAndMeasureLogs(snapshotRequestId);
+      }
+     } catch (error) {
+       Skynet.errorHandler('sendRequest', error);
+     }
     }, 4000);
   };
 
