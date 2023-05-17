@@ -91,8 +91,8 @@ import * as rrweb from 'rrweb';
 
   /* Default metadata information */
   Skynet.metadata = {
-    identity: '',
-    customerId: 0,
+    identity: undefined,
+    customerId: undefined,
   };
   /* Default to debugging off */
   Skynet.debugMode = false;
@@ -447,7 +447,7 @@ import * as rrweb from 'rrweb';
     const backendUrl = Skynet.backendUrl || Skynet.defaultBackendUrl;
     const url = `${backendUrl}/configs/sample-rate`;
 
-    window
+    return window
       .fetch(url, {
         method: 'GET',
         headers: {
@@ -463,7 +463,7 @@ import * as rrweb from 'rrweb';
     const backendUrl = Skynet.backendUrl || Skynet.defaultBackendUrl;
     const url = `${backendUrl}/customer-profiling-resource/check-config/${identifier}`;
 
-    window
+    return window
       .fetch(url, {
         method: 'GET',
         headers: {
@@ -555,33 +555,37 @@ import * as rrweb from 'rrweb';
 
   window.onload = async function () {
     try {
-      const configs = await Promise.all([
-        getSampleRateConfig(),
-        checkConfigCustomerProfilingResourceExist(
-          Skynet.metadata?.customerId || Skynet.metadata?.identity,
-        ),
-      ]);
-      const sampleRate = configs[0]?.value;
-      const isExistConfigCustomerProfilingResource = configs[1]?.existed;
-
-      const snapshotRequestId = await Skynet.sendProfilingResourceLogs();
-
-      if (
-        (sampleRate &&
-          !isNaN(sampleRate) &&
-          Math.random() < Number(sampleRate)) ||
-        isExistConfigCustomerProfilingResource
-      ) {
-        listenToEvents(snapshotRequestId);
-      }
+      let configs;
+      let sampleRate;
+      let isExistConfigCustomerProfilingResource;
+      let snapshotRequestId;
+      let condition;
 
       window.setTimeout(async () => {
-        if (
+        configs = await Promise.all([
+          getSampleRateConfig(),
+          checkConfigCustomerProfilingResourceExist(
+            Skynet.metadata?.identity || Skynet.metadata?.customerId,
+          ),
+        ]);
+
+        sampleRate = configs[0]?.value;
+        isExistConfigCustomerProfilingResource = configs[1]?.existed;
+
+        condition =
           (sampleRate &&
             !isNaN(sampleRate) &&
             Math.random() < Number(sampleRate)) ||
-          isExistConfigCustomerProfilingResource
-        ) {
+          isExistConfigCustomerProfilingResource;
+
+        if (condition) {
+          snapshotRequestId = await Skynet.sendProfilingResourceLogs();
+          listenToEvents(snapshotRequestId);
+        }
+      }, 3000);
+
+      window.setTimeout(async () => {
+        if (condition) {
           observePerformMarkAndMeasureLogs(snapshotRequestId);
         }
       }, 4000);
