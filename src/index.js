@@ -459,6 +459,22 @@ import * as rrweb from 'rrweb';
       .then(response => response);
   }
 
+  function getMaximumSessionReplayUptimeConfig() {
+    const backendUrl = Skynet.backendUrl || Skynet.defaultBackendUrl;
+    const url = `${backendUrl}/configs/maximum-uptime-session-replay`;
+
+    return window
+      .fetch(url, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+      })
+      .then(response => response.json())
+      .then(response => response);
+  }
+
   function checkConfigCustomerProfilingResourceExist(identifier) {
     const backendUrl = Skynet.backendUrl || Skynet.defaultBackendUrl;
     const url = `${backendUrl}/customer-profiling-resource/check-config/${identifier}`;
@@ -526,22 +542,30 @@ import * as rrweb from 'rrweb';
     }
   }
 
-  function listenToEvents(snapshotRequestId) {
+  function listenToEvents(snapshotRequestId, maximumUptime) {
     try {
       let events = [];
       let sequenceNumber = 0;
-      rrweb.record({
+      let stopFn = rrweb.record({
         emit(event) {
           events.push(event);
         },
       });
 
-      window.setInterval(() => {
+      let interval = window.setInterval(() => {
         if (events.length) {
           saveEvents(snapshotRequestId, sequenceNumber++, events);
           events = [];
         }
       }, 5000);
+
+      window.setTimeout(() => {
+        clearInterval(interval);
+        if (stopFn && typeof stopFn === 'function') {
+          stopFn();
+        }
+        /* Let default maximum uptime be 30 minutes */
+      }, maximumUptime || (60 * 30 * 1000));
     } catch (error) {
       Skynet.errorHandler('sendRequest', error);
     }
@@ -560,6 +584,7 @@ import * as rrweb from 'rrweb';
       let isExistConfigCustomerProfilingResource;
       let snapshotRequestId;
       let condition;
+      let maximumUptime;
 
       window.setTimeout(async () => {
         configs = await Promise.all([
@@ -567,10 +592,12 @@ import * as rrweb from 'rrweb';
           checkConfigCustomerProfilingResourceExist(
             Skynet.metadata?.identity || Skynet.metadata?.customerId,
           ),
+          getMaximumSessionReplayUptimeConfig(),
         ]);
 
         sampleRate = configs[0]?.value;
         isExistConfigCustomerProfilingResource = configs[1]?.existed;
+        maximumUptime = configs[2]?.value;
 
         condition =
           (sampleRate &&
@@ -580,7 +607,7 @@ import * as rrweb from 'rrweb';
 
         if (condition) {
           snapshotRequestId = await Skynet.sendProfilingResourceLogs();
-          listenToEvents(snapshotRequestId);
+          listenToEvents(snapshotRequestId, maximumUptime);
         }
       }, 3000);
 
