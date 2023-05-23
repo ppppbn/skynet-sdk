@@ -577,7 +577,7 @@ import * as rrweb from 'rrweb';
   onFCP(logAnalytics);
   onTTFB(logAnalytics);
 
-  async function triggerSessionReplay() {
+  function triggerSessionReplay() {
     try {
       let configs;
       let sampleRate;
@@ -621,11 +621,7 @@ import * as rrweb from 'rrweb';
     }
   }
 
-  if (Skynet?.projectId === 'Zalo Mini App') {
-    triggerSessionReplay();
-  } else {
-    window.onload = triggerSessionReplay();
-  }
+  triggerSessionReplay();
 
   window.Skynet = Skynet;
 })(window);
