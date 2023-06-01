@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "dotenv": "^16.0.2",
+    "rrweb": "^2.0.0-alpha.4",
     "web-vitals": "^3.0.4"
   }
 }
